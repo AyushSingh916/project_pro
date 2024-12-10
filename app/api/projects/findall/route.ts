@@ -17,8 +17,6 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(sprints)
-
     return NextResponse.json({ sprints }, { status: 200 });
   } catch (error) {
     console.error("Error fetching sprints and issues:", error);

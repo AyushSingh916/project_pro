@@ -51,6 +51,8 @@ interface Sprint {
 const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [isLoadingIssues, setIsLoadingIssues] = useState(false);
+  const [issueError, setIssueError] = useState<string | null>(null);
   const [projectId, setId] = useState<string>();
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
@@ -101,6 +103,56 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
 
     fetchData();
   }, [projectId]);
+
+  useEffect(() => {
+    const fetchIssuesForSprint = async () => {
+      if (!selectedSprint?.id) {
+        return;
+      }
+
+      setIsLoadingIssues(true);
+      setIssueError(null);
+
+      try {
+        const response = await fetch(
+          `/api/projects/sprints/issues/find/?sprintId=${selectedSprint.id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch issues: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Update the sprints state with the fetched issues
+        const updatedSprints = sprints.map((sprint) =>
+          sprint.id === selectedSprint.id
+            ? { ...sprint, issues: data.issues }
+            : sprint
+        );
+
+        setSprints(updatedSprints);
+        setSelectedSprint(
+          updatedSprints.find((s) => s.id === selectedSprint.id) || null
+        );
+      } catch (error) {
+        console.error("Error fetching issues:", error);
+        setIssueError(
+          error instanceof Error ? error.message : "Failed to fetch issues"
+        );
+      } finally {
+        setIsLoadingIssues(false);
+      }
+    };
+
+    fetchIssuesForSprint();
+  }, [selectedSprint?.id]);
 
   const createSprint = async () => {
     if (
@@ -159,7 +211,7 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
     }
 
     try {
-      const response = await fetch("/api/projects/sprints/issues", {
+      const response = await fetch("/api/projects/sprints/issues/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -465,12 +517,22 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
       </Card>
 
       {selectedSprint && (
-        <div className="grid grid-cols-4 gap-4">
-          {renderKanbanColumn("todo")}
-          {renderKanbanColumn("in-progress")}
-          {renderKanbanColumn("review")}
-          {renderKanbanColumn("done")}
-        </div>
+        <>
+          {isLoadingIssues ? (
+            <div className="flex justify-center items-center h-64">
+              <p>Loading issues...</p>
+            </div>
+          ) : issueError ? (
+            <div className="p-4 text-red-500">Error: {issueError}</div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {renderKanbanColumn("todo")}
+              {renderKanbanColumn("in-progress")}
+              {renderKanbanColumn("review")}
+              {renderKanbanColumn("done")}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
