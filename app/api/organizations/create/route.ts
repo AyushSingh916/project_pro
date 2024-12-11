@@ -34,9 +34,10 @@ export async function POST(request: Request) {
             },
         });
 
+
         // Return the response
         return NextResponse.json(
-            { message: "Organization created successfully", organization: newOrganization },
+            { newOrganization },
             { status: 201 }
         );
     } catch (error) {

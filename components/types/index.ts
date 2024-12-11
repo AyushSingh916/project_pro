@@ -14,12 +14,14 @@ export interface NewSprint {
 }
 
 export interface Sprint {
-  id: number;
-  name: string;
-  startDate: string;
-  endDate: string;
-  issues: Issue[];
+  id?: number;
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  issues?: Issue[];
 }
+
 
 export type Collaborator = {
   id: number;

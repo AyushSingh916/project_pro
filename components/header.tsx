@@ -10,7 +10,6 @@ import UserModal from "./modal";
 
 function Header() {
   const { data: session } = useSession();
-  //   console.log(session?.user.provider);
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -25,9 +24,9 @@ function Header() {
             <Image
               src={"/logo.svg"}
               alt="Zscrum Logo"
-              width={200}
-              height={56}
-              className="h-10 w-auto object-contain"
+              width={300} // Larger logo width
+              height={84} // Larger logo height
+              className="h-14 w-auto object-contain" // Adjust Tailwind height class
             />
           </h1>
         </Link>
@@ -42,8 +41,8 @@ function Header() {
                   <Image
                     src={session.user?.image || "/default-avatar.svg"}
                     alt="User Avatar"
-                    width={40}
-                    height={40}
+                    width={80}
+                    height={80}
                     className="object-cover"
                   />
                 </button>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Building2, Users, Plus, Shield, Send } from "lucide-react";
+import { Building2, Users, Plus, Shield, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,11 +36,28 @@ type OrganizationRole =
   | "PENDING";
 
 interface Organization {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
   userRole: OrganizationRole;
   slug?: string;
+  adminUsername: string;
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      username: string;
+      email: string;
+    };
+  }
+
+  interface User {
+    id: string;
+    username: string;
+    email: string;
+  }
 }
 
 export default function OrganizationList() {
@@ -49,16 +66,17 @@ export default function OrganizationList() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [orgSlug, setOrgSlug] = useState("");
-  const [orgDescription, setOrgDescription] = useState("");  // Add state for description
+  const [orgDescription, setOrgDescription] = useState(""); // Add state for description
   const [joinOrgSlug, setJoinOrgSlug] = useState("");
   const [loading, setLoading] = useState(true);
 
   const { data: session, status } = useSession();
-  const username = session?.user?.username;
+  if (!session) return;
+  const username = session.user.username || "User";
 
   const { toast } = useToast();
 
-  const getRoleBadgeVariant = (role: OrganizationRole) => {
+  const getRoleBadgeVariant = (role: string): "destructive" | "secondary" | "outline" | "default" | null => {
     switch (role) {
       case "ADMIN":
         return "destructive";
@@ -66,10 +84,6 @@ export default function OrganizationList() {
         return "secondary";
       case "MEMBER":
         return "outline";
-      case "VIEWER":
-        return "ghost";
-      case "PENDING":
-        return "warning";
       default:
         return "default";
     }
@@ -89,12 +103,15 @@ export default function OrganizationList() {
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOrgDescription(e.target.value);  // Update description state
+    setOrgDescription(e.target.value); // Update description state
   };
 
   const handleSubmit = async () => {
-    // Ensure we include the description in the payload
-    console.log("Creating organization:", { name: orgName, slug: orgSlug, description: orgDescription });
+    console.log("Creating organization:", {
+      name: orgName,
+      slug: orgSlug,
+      description: orgDescription,
+    });
 
     try {
       const response = await fetch("/api/organizations/create", {
@@ -102,28 +119,106 @@ export default function OrganizationList() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name: orgName, slug: orgSlug, description: orgDescription, username: username }),
+        body: JSON.stringify({
+          name: orgName,
+          slug: orgSlug,
+          description: orgDescription,
+          username: username,
+        }),
       });
 
-      if (response.ok) {
+      // Check for HTTP errors
+      if (!response.ok) {
+        const errorData = await response.json();
         toast({
-          title: "Organization Created",
-          description: `The organization ${orgName} has been created successfully.`,
+          title: "Error",
+          description:
+            errorData.message ||
+            "Could not create organization. Please try again.",
+          variant: "destructive",
         });
-        setIsModalOpen(false);
-        setOrgName("");
-        setOrgSlug("");
-        setOrgDescription(""); // Clear description after successful creation
-      } else {
-        throw new Error("Failed to create organization");
+        console.error("Error response from server:", errorData);
+        return;
       }
+
+      // Parse and process the successful response
+      const newOrganization = await response.json();
+      console.log("New organization created:", newOrganization);
+
+      toast({
+        title: "Organization Created",
+        description: `The organization "${orgName}" has been created successfully.`,
+      });
+
+      // Update state
+      setIsModalOpen(false);
+      setOrgName("");
+      setOrgSlug("");
+      setOrgDescription("");
+      setOrganizations((prev) => [
+        ...prev,
+        {
+          name: orgName,
+          description: orgDescription,
+          slug: orgSlug,
+          userRole: "ADMIN",
+        },
+      ]);
+
+      console.log("Updated organizations list:", organizations);
     } catch (error) {
+      // Catch any unexpected errors
       toast({
         title: "Error",
-        description: "Could not create organization. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      console.error("Error creating organization:", error);
+      console.error("Unexpected error creating organization:", error);
+    }
+  };
+
+  const handleDeleteOrganization = async (orgSlug: string) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the organization "${orgSlug}"?`
+      )
+    ) {
+      try {
+        const response = await fetch(`/api/organizations/delete`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ slug: orgSlug }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          toast({
+            title: "Error",
+            description:
+              errorData.message ||
+              "Could not delete organization. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Organization Deleted",
+          description: `The organization "${orgSlug}" has been deleted successfully.`,
+        });
+
+        // Remove the organization from the state
+        setOrganizations((prev) => prev.filter((org) => org.slug !== orgSlug));
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+        console.error("Unexpected error deleting organization:", error);
+      }
     }
   };
 
@@ -185,10 +280,13 @@ export default function OrganizationList() {
 
         const result = await response.json();
 
-        const organizationsWithRole = result.organizations?.map((org: Organization) => {
-          const userRole = org.adminUsername === username ? "ADMIN" : "CONTRIBUTOR";
-          return { ...org, userRole };
-        });
+        const organizationsWithRole = result.organizations?.map(
+          (org: Organization) => {
+            const userRole =
+              org.adminUsername === username ? "ADMIN" : "CONTRIBUTOR";
+            return { ...org, userRole };
+          }
+        );
 
         setOrganizations(organizationsWithRole || []);
       } catch (error) {
@@ -206,6 +304,7 @@ export default function OrganizationList() {
     fetchOrganizations();
   }, [username]);
 
+  
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -219,8 +318,8 @@ export default function OrganizationList() {
       {organizations.length === 0 ? (
         <div className="text-center text-muted">No organizations found.</div>
       ) : (
-        organizations.map((org) => (
-          <Card key={org.id} className="w-full">
+        organizations.map((org, index) => (
+          <Card key={index} className="w-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div className="flex items-center space-x-3">
                 <Building2 className="h-6 w-6 text-muted-foreground" />
@@ -245,20 +344,25 @@ export default function OrganizationList() {
                 <Button variant="outline" asChild>
                   <Link href={`/organization/${org.slug}`}>View Details</Link>
                 </Button>
-                <Button variant="secondary" asChild>
-                  <Link href={`/organization/${org.id}/projects`}>
-                    <Users className="mr-2 h-4 w-4" /> Projects
-                  </Link>
-                </Button>
               </div>
               <div className="flex space-x-2">
-                {org.userRole === "ADMIN" && (
+                {org.userRole === "CONTRIBUTOR" && (
                   <Button variant="outline" size="icon" title="Admin Settings">
                     <Shield className="h-4 w-4" />
                   </Button>
                 )}
                 {org.userRole === "PENDING" && (
-                  <Badge variant="warning">Pending Approval</Badge>
+                  <Badge variant="default">Pending Approval</Badge>
+                )}
+                {org.userRole === "ADMIN" && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    title="Delete Organization"
+                    onClick={() => handleDeleteOrganization(org.slug || "")}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
             </CardFooter>

@@ -1,28 +1,22 @@
-<svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
-  <!-- Main "P" icon with connected nodes -->
-  <g transform="translate(10, 5)">
-    <path d="M25 10 C25 5, 30 0, 35 0 L40 0 C45 0, 50 5, 50 10 L50 20 C50 25, 45 30, 40 30 L25 30 L25 50"
-          fill="none" 
-          stroke="#6366F1" 
-          stroke-width="8"
-          stroke-linecap="round"/>
-    
-    <!-- Connected dots -->
-    <circle cx="25" cy="10" r="4" fill="#6366F1"/>
-    <circle cx="45" cy="15" r="4" fill="#6366F1"/>
-    <circle cx="25" cy="40" r="4" fill="#6366F1"/>
-    
-    <!-- Connection lines -->
-    <line x1="25" y1="10" x2="45" y2="15" stroke="#6366F1" stroke-width="2"/>
-    <line x1="25" y1="40" x2="45" y2="15" stroke="#6366F1" stroke-width="2"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Background circle -->
+  <circle cx="200" cy="200" r="180" fill="#0f172a"/>
   
-  <!-- Text "ProjectPro" -->
-  <text x="70" y="35" 
-        font-family="Arial, sans-serif" 
-        font-weight="bold" 
-        font-size="24" 
-        fill="#1F2937">
-    roject<tspan fill="#6366F1">Pro</tspan>
-  </text>
+  <!-- Letter P stylized as a chart/progress indicator -->
+  <path d="M120 120 L120 280 L120 120 Q120 120 160 120 Q220 120 220 170 Q220 220 160 220 L120 220"
+        stroke="#38bdf8" 
+        fill="none"
+        stroke-width="24"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+  
+  <!-- Abstract chart bars suggesting management/progress -->
+  <rect x="240" y="140" width="24" height="120" fill="#38bdf8" rx="4"/>
+  <rect x="280" y="170" width="24" height="90" fill="#0ea5e9" rx="4"/>
+  <rect x="320" y="190" width="24" height="70" fill="#0284c7" rx="4"/>
+  
+  <!-- Dots suggesting connection/workflow -->
+  <circle cx="120" cy="280" r="12" fill="#38bdf8"/>
+  <circle cx="160" cy="280" r="12" fill="#0ea5e9"/>
+  <circle cx="200" cy="280" r="12" fill="#0284c7"/>
 </svg>

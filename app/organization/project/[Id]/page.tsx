@@ -52,8 +52,6 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
   const [isCreateSprintDialogOpen, setIsCreateSprintDialogOpen] =
     useState(false);
   const [collaborators, setcollaborators] = useState<Collaborator[]>([]);
-  const [issues, setissues] = useState([]);
-  const [dummyState, setDummyState] = useState(false);
 
   useEffect(() => {
     params.then((resolvedParams) => {
@@ -198,7 +196,6 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
         priority: "medium",
       });
       setIsCreateIssueDialogOpen(false);
-      setDummyState((prev) => !prev);
     } catch (error) {
       console.error("Error creating issue:", error);
     }
@@ -226,11 +223,12 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
 
       console.log(await response.json());
 
-      // Update sprints state
-      // Create a new array of issues with the updated status
-      const updatedIssues = selectedSprint?.issues.map((issue) =>
-        issue.id === issueId ? { ...issue, status: newStatus } : issue
-      );
+      if (!selectedSprint) return;
+
+      const updatedIssues =
+        selectedSprint.issues?.map((issue) =>
+          issue.id === issueId ? { ...issue, status: newStatus } : issue
+        ) || [];
 
       // Create a new `selectedSprint` object with the updated issues array
       const updatedSprint = {
@@ -278,7 +276,7 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
       <div className="flex flex-row justify-between">
         <Button variant="ghost" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Projects
+          Back to Organization
         </Button>
 
         <Button onClick={() => setIsAddCollaboratorModalOpen(true)}>

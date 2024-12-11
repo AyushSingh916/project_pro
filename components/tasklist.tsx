@@ -1,21 +1,20 @@
 import Link from 'next/link';
 import { CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 
 interface Issue {
   id: string;
   title: string;
   status: string;
   priority: string;
-  project: {
-    name: string;
-    organization: {
+  sprint: {
+    project: {
       name: string;
+      description: string;
+      organizationSlug: string;
     };
   };
-}
-
-interface AssignedTasksListProps {
-  issues: Issue[];
 }
 
 // Utility function to get status icon and color
@@ -48,7 +47,32 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-export default function AssignedTasksList({ issues }: AssignedTasksListProps) {
+export default function AssignedTasksList() {
+  const [issues, setIssues] = useState<Issue[]>([]);
+
+  const { data: session, status } = useSession();
+  const username = session?.user?.username || "User";
+
+  useEffect(() => {
+    const fetchIssues = async () => {
+      try {
+        // Fetch issues where the assignee's username matches the provided username
+        const fetchedIssues = await fetch(
+          `/api/projects/sprints/issues/assigned?username=${username}`
+        );
+
+        const issuesJson = await fetchedIssues.json();
+
+        setIssues(issuesJson);
+        console.log(issuesJson);
+      } catch (error) {
+        console.error("Error fetching issues:", error);
+      }
+    };
+
+    fetchIssues();
+  }, [username]);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="divide-y divide-gray-200">
@@ -69,9 +93,9 @@ export default function AssignedTasksList({ issues }: AssignedTasksListProps) {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{issue.title}</h3>
                     <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-                      <span>{issue.project.organization.name}</span>
+                      <span>{issue.sprint.project.organizationSlug}</span>
                       <span>•</span>
-                      <span>{issue.project.name}</span>
+                      <span>{issue.sprint.project.name}</span>
                     </div>
                   </div>
                 </div>

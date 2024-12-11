@@ -18,8 +18,8 @@ export default function UserModal({ user, isOpen, onClose, onSignOut } : any) {
             className="object-cover rounded-full"
           />
           <div>
-            <p className="font-semibold">{user?.name}</p>
-            <p className="text-sm text-gray-500">{user?.email}</p>
+            <p className="font-semibold text-gray-600">{"Username: " +  user?.username}</p>
+            <p className="text-sm text-gray-600">{"Email: " + user?.email}</p>
           </div>
         </div>
         <hr className="my-4" />
