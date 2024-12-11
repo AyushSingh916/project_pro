@@ -17,8 +17,6 @@ export async function GET(request: Request) {
             }
         }
     });
-
-    console.log(fetchedIssues)
-
+    
     return NextResponse.json(fetchedIssues, { status: 201 });
 }

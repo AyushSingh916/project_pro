@@ -8,29 +8,32 @@ datasource db {
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  username      String         @unique
-  email         String         @unique
-  password      String
-  organizations Organization[] @relation("UserOrganizations")
-  projects      Project[]      @relation("ProjectCollaborators") // Relation to projects as collaborators
-  issues        Issue[] // Relation to issues assigned to this user
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  Organization  Organization[]
+  id                    Int            @id @default(autoincrement())
+  username              String         @unique
+  email                 String         @unique
+  password              String
+  organizations         Organization[] @relation("UserOrganizations")
+  projects              Project[]      @relation("ProjectCollaborators")
+  issues                Issue[]
+  notificationsSent     Notification[] @relation("NotificationSender")
+  notificationsReceived Notification[] @relation("NotificationReceiver")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  Organization          Organization[]
 }
 
 model Organization {
-  id            Int       @id @default(autoincrement())
-  name          String    @unique
-  slug          String    @unique
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  slug          String         @unique
   adminUsername String
-  admin         User      @relation(fields: [adminUsername], references: [username])
+  admin         User           @relation(fields: [adminUsername], references: [username])
   description   String?
-  users         User[]    @relation("UserOrganizations")
+  users         User[]         @relation("UserOrganizations")
   projects      Project[] // Relation to Project model
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  Notification  Notification[]
 }
 
 model Project {
@@ -70,6 +73,18 @@ model Issue {
   status           Status   @default(TODO)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model Notification {
+  id               String       @id @default(cuid())
+  sender           User         @relation("NotificationSender", fields: [senderUsername], references: [username])
+  senderUsername   String
+  receiver         User         @relation("NotificationReceiver", fields: [receiverUsername], references: [username])
+  receiverUsername String
+  organization     Organization @relation(fields: [organizationSlug], references: [slug])
+  organizationSlug String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
 
 enum ProjectStatus {

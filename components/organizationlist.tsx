@@ -143,7 +143,6 @@ export default function OrganizationList() {
 
       // Parse and process the successful response
       const newOrganization = await response.json();
-      console.log("New organization created:", newOrganization);
 
       toast({
         title: "Organization Created",
@@ -238,7 +237,7 @@ export default function OrganizationList() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ slug: joinOrgSlug }),
+        body: JSON.stringify({ slug: joinOrgSlug, username: username }),
       });
 
       toast({

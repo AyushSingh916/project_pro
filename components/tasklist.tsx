@@ -10,6 +10,7 @@ interface Issue {
   priority: string;
   sprint: {
     project: {
+      id: number;
       name: string;
       description: string;
       organizationSlug: string;
@@ -64,7 +65,6 @@ export default function AssignedTasksList() {
         const issuesJson = await fetchedIssues.json();
 
         setIssues(issuesJson);
-        console.log(issuesJson);
       } catch (error) {
         console.error("Error fetching issues:", error);
       }
@@ -83,7 +83,7 @@ export default function AssignedTasksList() {
 
           return (
             <Link 
-              href={`/issues/${issue.id}`} 
+              href={`/organization/project/${issue.sprint.project.id}`} 
               key={issue.id} 
               className="block hover:bg-gray-50 transition-colors duration-200"
             >
