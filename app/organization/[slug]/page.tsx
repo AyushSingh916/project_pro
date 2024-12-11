@@ -1,13 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users2, FolderKanban, ArrowLeft, Mail, User } from "lucide-react";
+import {
+  Building2,
+  Users2,
+  FolderKanban,
+  ArrowLeft,
+  Mail,
+  User,
+} from "lucide-react";
 import CreateProjectModal from "@/components/CreateProjectModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import AddMemberModal from "@/components/addmembermodal";
 import Link from "next/link";
 
 interface User {
@@ -32,13 +54,19 @@ interface Organization {
   projects: Project[];
 }
 
-const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => {
+const OrganizationPage = ({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) => {
   const router = useRouter();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [newMember, setNewMember] = useState({ username: "", email: "" });
 
   useEffect(() => {
     const fetchSlug = async () => {
@@ -91,14 +119,42 @@ const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => 
 
       const newProject = await response.json();
       setOrganization((prev) =>
-        prev
-          ? { ...prev, projects: [...prev.projects, newProject] }
-          : null
+        prev ? { ...prev, projects: [...prev.projects, newProject] } : null
       );
 
       setIsModalOpen(false);
     } catch (err) {
       console.error("Error creating project:", err);
+    }
+  };
+
+  const handleAddMember = async () => {
+    try {
+      const response = await fetch("/api/organizations/add-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: newMember.username,
+          email: newMember.email,
+          organizationSlug: slug,
+        }),
+      });
+
+
+      const req = await response.json();
+      console.log(req)
+      const addedMember = req.user || "";
+
+      // Update organization users
+      setOrganization((prev) =>
+        prev ? { ...prev, users: [...prev.users, addedMember] } : null
+      );
+
+      // Reset state and close modal
+      setNewMember({ username: "", email: "" });
+      setIsAddMemberModalOpen(false);
+    } catch (error) {
+      console.error("Error adding member:", error);
     }
   };
 
@@ -167,10 +223,14 @@ const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => 
         <CardContent>
           <div className="flex items-center space-x-4">
             <Avatar className="h-10 w-10">
-              <AvatarFallback>{organization?.admin.username.charAt(0)}</AvatarFallback>
+              <AvatarFallback>
+                {organization?.admin.username.charAt(0)}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-semibold">{organization?.admin.username}</div>
+              <div className="font-semibold">
+                {organization?.admin.username}
+              </div>
               <div className="text-muted-foreground text-sm flex items-center gap-1">
                 <Mail size={14} /> {organization?.admin.email}
               </div>
@@ -181,9 +241,13 @@ const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => 
 
       {/* Users */}
       <Card>
-        <CardHeader className="flex flex-row items-center space-x-2">
-          <Users2 className="w-5 h-5 text-muted-foreground" />
-          <CardTitle className="text-lg">Users</CardTitle>
+        <CardHeader className="flex flex-row justify-between">
+          <div className="flex flex-row items-center space-x-2">
+            <Users2 className="w-5 h-5 text-muted-foreground" />
+            <CardTitle className="text-lg">Members</CardTitle>
+          </div>
+          <Button onClick={() => setIsAddMemberModalOpen(true)}>Add Member</Button>
+
         </CardHeader>
         <CardContent>
           {organization?.users.length === 0 ? (
@@ -199,7 +263,9 @@ const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => 
                   </Avatar>
                   <div>
                     <div className="font-semibold">{user.username}</div>
-                    <div className="text-muted-foreground text-sm">{user.email}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {user.email}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -232,18 +298,20 @@ const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => 
           ) : (
             <div className="grid gap-4">
               {organization?.projects.map((project) => (
-                <Link href={`project/${project.id}`}>
+                <Link href={`project/${project.id}`} key={project.id}>
                   <Card key={project.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{project.name}</CardTitle>
-                      <Badge variant="secondary">{project.status}</Badge>
-                    </div>
-                    <CardDescription>
-                      {project.description || "No description available"}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">
+                          {project.name}
+                        </CardTitle>
+                        <Badge variant="secondary">{project.status}</Badge>
+                      </div>
+                      <CardDescription>
+                        {project.description || "No description available"}
+                      </CardDescription>
+                    </CardHeader>
+                  </Card>
                 </Link>
               ))}
             </div>
@@ -256,6 +324,14 @@ const OrganizationPage = ({ params }: { params: Promise<{ slug: string }> }) => 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateProject}
+      />
+
+      <AddMemberModal
+        isOpen={isAddMemberModalOpen}
+        onClose={() => setIsAddMemberModalOpen(false)}
+        onSubmit={handleAddMember}
+        newMember={newMember}
+        setNewMember={setNewMember}
       />
     </div>
   );

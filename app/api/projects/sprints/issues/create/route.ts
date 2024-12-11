@@ -17,8 +17,6 @@ export async function POST(request: Request) {
 
     const { title, description, sprintId, assignee, priority = "MEDIUM", status = "TODO" } = req;
 
-    console.log(req)
-
     // Validate required fields
     if (!title || !sprintId || !assignee) {
       return NextResponse.json(

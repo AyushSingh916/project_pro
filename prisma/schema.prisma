@@ -13,67 +13,69 @@ model User {
   email         String         @unique
   password      String
   organizations Organization[] @relation("UserOrganizations")
+  projects      Project[]      @relation("ProjectCollaborators") // Relation to projects as collaborators
+  issues        Issue[] // Relation to issues assigned to this user
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   Organization  Organization[]
-  issues        Issue[]        // Relation to issues assigned to this user
 }
 
 model Organization {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  slug        String     @unique
+  id            Int       @id @default(autoincrement())
+  name          String    @unique
+  slug          String    @unique
   adminUsername String
-  admin       User       @relation(fields: [adminUsername], references: [username]) 
-  description String?
-  users       User[]     @relation("UserOrganizations")
-  projects    Project[]  // Relation to Project model
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  admin         User      @relation(fields: [adminUsername], references: [username])
+  description   String?
+  users         User[]    @relation("UserOrganizations")
+  projects      Project[] // Relation to Project model
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Project {
-  id            Int          @id @default(autoincrement())
-  name          String       
-  description   String?
-  organization  Organization @relation(fields: [organizationSlug], references: [slug])
+  id               Int           @id @default(autoincrement())
+  name             String
+  description      String?
+  organization     Organization  @relation(fields: [organizationSlug], references: [slug])
   organizationSlug String
-  status        ProjectStatus @default(PENDING) // Add status with default
-  sprints       Sprint[]     // Relation to Sprints
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  status           ProjectStatus @default(PENDING)
+  sprints          Sprint[] // Relation to Sprints
+  collaborators    User[]        @relation("ProjectCollaborators") // Relation to Users as collaborators
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 }
 
 model Sprint {
-  id            Int       @id @default(autoincrement())
-  name          String
-  project       Project   @relation(fields: [projectId], references: [id])
-  projectId     Int
-  startDate     DateTime
-  endDate       DateTime
-  issues        Issue[]   // Relation to Issues
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  project   Project  @relation(fields: [projectId], references: [id])
+  projectId Int
+  startDate DateTime
+  endDate   DateTime
+  issues    Issue[] // Relation to Issues
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Issue {
-  id            String    @id @default(cuid())
-  title         String
-  description   String?
-  sprint        Sprint    @relation(fields: [sprintId], references: [id])
-  sprintId      Int
-  assignee      User      @relation(fields: [assigneeUsername], references: [username])
+  id               String   @id @default(cuid())
+  title            String
+  description      String?
+  sprint           Sprint   @relation(fields: [sprintId], references: [id])
+  sprintId         Int
+  assignee         User     @relation(fields: [assigneeUsername], references: [username])
   assigneeUsername String
-  priority      Priority  @default(MEDIUM)
-  status        Status    @default(TODO)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  priority         Priority @default(MEDIUM)
+  status           Status   @default(TODO)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 enum ProjectStatus {
-  PENDING     
-  IN_PROGRESS  
-  DONE       
+  PENDING
+  IN_PROGRESS
+  DONE
 }
 
 enum Priority {

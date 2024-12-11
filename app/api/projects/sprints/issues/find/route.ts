@@ -23,8 +23,6 @@ export async function GET(
       },
     });
 
-    console.log(issues)
-
     if (issues.length === 0) {
       return NextResponse.json(
         { message: "No issues found for this sprint." },
