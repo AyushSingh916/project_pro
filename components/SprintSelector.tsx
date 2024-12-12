@@ -93,19 +93,14 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
 
       const createdSprint = await response.json();
 
-      // Update sprints by adding the new sprint
       const newSprintWithEmptyIssues = {
         ...createdSprint,
         issues: [],
         projectId,
       };
 
-      const updatedSprints = [...sprints, newSprintWithEmptyIssues];
-      // setSprints(updatedSprints);
-      // setSelectedSprint(newSprintWithEmptyIssues);
-
       handleUpdateSprint(newSprintWithEmptyIssues);
-      handleUpdateSprints(updatedSprints);
+      handleUpdateSprints([...sprints, newSprintWithEmptyIssues]);
 
       // Reset form
       setNewSprint({ name: "", startDate: "", endDate: "" });
@@ -120,7 +115,7 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
   };
 
   return (
-    <div className="flex items-center space-x-4">
+    <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full">
       <Select
         value={selectedSprint?.id ? selectedSprint.id.toString() : ""}
         onValueChange={(value) => {
@@ -128,7 +123,7 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
           handleUpdateSprint(sprint);
         }}
       >
-        <SelectTrigger className="w-[280px]">
+        <SelectTrigger className="w-full sm:w-[180px] md:w-[280px]">
           <SelectValue placeholder="Select Sprint" />
         </SelectTrigger>
         <SelectContent>
@@ -148,7 +143,7 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
         onOpenChange={setIsCreateSprintDialogOpen}
       >
         <DialogTrigger asChild>
-          <Button variant="default">
+          <Button variant="default" className="w-full sm:w-auto">
             <PlusCircle className="w-4 h-4 mr-2" />
             Create Sprint
           </Button>

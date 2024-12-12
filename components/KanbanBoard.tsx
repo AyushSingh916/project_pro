@@ -26,7 +26,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   isLoading = false,
 }) => {
   const handleDragStart = (e: DragEvent<HTMLDivElement>, issue: Issue) => {
-    // Prevent dragging if loading
     if (isLoading) {
       e.preventDefault();
       return;
@@ -35,7 +34,6 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    // Prevent drag if loading
     if (isLoading) {
       e.preventDefault();
       return;
@@ -47,21 +45,16 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     e: DragEvent<HTMLDivElement>,
     targetStatus: Issue["status"]
   ) => {
-    // Prevent drop if loading
     if (isLoading) {
       e.preventDefault();
       return;
     }
-
     e.preventDefault();
     const draggedIssueData = e.dataTransfer?.getData("text/plain");
-    
     if (!draggedIssueData) return;
 
     try {
       const draggedIssue = JSON.parse(draggedIssueData);
-      
-      // Ensure the issue actually needs a status change
       if (draggedIssue.status !== targetStatus) {
         onStatusChange(draggedIssue.id, targetStatus);
       }
@@ -70,36 +63,69 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  const columns: Issue["status"][] = ["todo", "in_progress", "review", "done"];
+
   const renderKanbanColumn = (status: Issue["status"]) => {
-    const columnIssues = issues.filter((issue) => issue.status.toLowerCase() === status);
+    const columnIssues = issues.filter(
+      (issue) => issue.status.toLowerCase() === status
+    );
 
     return (
       <div
+        key={status}
         className={`
-          bg-gray-100 p-4 rounded-lg min-h-[400px] text-black 
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}
+          bg-gray-100 p-4 rounded-lg min-h-[200px] w-full text-black
+          ${isLoading ? "opacity-50 cursor-not-allowed" : ""}
+          md:min-h-[400px]
         `}
         onDragOver={handleDragOver}
         onDrop={(e) => handleDrop(e, status)}
       >
         <h3 className="font-semibold mb-4 capitalize">
-          {status.replace("-", " ")}
+          {status.replace("_", " ")}
         </h3>
         {columnIssues.map((issue) => (
           <Card
             key={issue.id}
             className={`
-              mb-2 
-              ${isLoading ? 'cursor-not-allowed' : 'cursor-move'}
-            `}
+            mb-2
+            ${isLoading ? "cursor-not-allowed" : "cursor-move"}
+            touch-manipulation
+            hover:shadow-md
+            transition-shadow
+            max-w-full
+          `}
             draggable={!isLoading}
             onDragStart={(e) => handleDragStart(e, issue)}
-          > 
-            <CardContent className="p-4">
-              <p className="font-medium">{issue.title}</p>
-              <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
-              <div className="flex items-center mt-2">
-                <span className="text-sm mr-2">{'@' + issue.assigneeUsername}</span>
+          >
+            <CardContent className="p-3">
+              <p
+                className="font-medium text-sm truncate mb-1"
+                title={issue.title}
+              >
+                {issue.title}
+              </p>
+              <p
+                className="text-sm text-gray-600 break-words whitespace-pre-wrap mb-2"
+                title={issue.description}
+                style={{
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: "3",
+                  overflow: "hidden",
+                  minHeight: "3rem",
+                  maxHeight: "4.5rem",
+                }}
+              >
+                {issue.description}
+              </p>
+              <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+                <span
+                  className="text-xs text-gray-500 truncate max-w-[120px]"
+                  title={"@" + issue.assigneeUsername}
+                >
+                  {"@" + issue.assigneeUsername}
+                </span>
                 <Badge
                   variant={
                     issue.priority.toLowerCase() === "high"
@@ -108,6 +134,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       ? "default"
                       : "secondary"
                   }
+                  className="text-xs"
                 >
                   {issue.priority}
                 </Badge>
@@ -133,11 +160,16 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-4 gap-4">
-      {renderKanbanColumn("todo")}
-      {renderKanbanColumn("in_progress")}
-      {renderKanbanColumn("review")}
-      {renderKanbanColumn("done")}
+    <div className="w-full">
+      {/* Desktop View */}
+      <div className="hidden md:grid md:grid-cols-4 gap-4">
+        {columns.map(renderKanbanColumn)}
+      </div>
+
+      {/* Mobile View - Vertical Layout */}
+      <div className="md:hidden space-y-4 pb-4">
+        {columns.map(renderKanbanColumn)}
+      </div>
     </div>
   );
 };

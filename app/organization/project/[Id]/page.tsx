@@ -272,8 +272,9 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
         </Button>
       </div>
 
-      <Card>
-        <div className="flex justify-between items-center p-4">
+      <Card className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-center p-4 space-y-2 sm:space-y-0 sm:space-x-4">
+        <div className="w-full sm:w-auto">
           <SprintSelector
             sprints={sprints}
             selectedSprint={selectedSprint}
@@ -282,6 +283,8 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
             handleUpdateSprint={handleUpdateSprint}
             handleUpdateSprints={handleUpdateSprints}
           />
+        </div>
+        <div className="w-full sm:w-auto">
           <CreateIssueDialog
             isOpen={isCreateIssueDialogOpen}
             setIsCreateIssueDialogOpen={setIsCreateIssueDialogOpen}
@@ -291,7 +294,8 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
             collaborators={collaborators}
           />
         </div>
-      </Card>
+      </div>
+    </Card>
 
       <Collaborators collabarators={collaborators} />
 
