@@ -107,11 +107,6 @@ export default function OrganizationList() {
   };
 
   const handleSubmit = async () => {
-    console.log("Creating organization:", {
-      name: orgName,
-      slug: orgSlug,
-      description: orgDescription,
-    });
 
     try {
       const response = await fetch("/api/organizations/create", {
@@ -161,7 +156,6 @@ export default function OrganizationList() {
         },
       ]);
 
-      console.log("Updated organizations list:", organizations);
     } catch (error) {
       // Catch any unexpected errors
       toast({

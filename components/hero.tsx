@@ -23,7 +23,7 @@ const Hero = () => {
         Empower your team with our intuitive project management solution.
       </p>
       <p className="text-xl mb-12 max-w-2xl mx-auto"></p>
-      <Link href="/onboarding">
+      <Link href="/signup">
         <Button size="lg" className="mr-4">
           Get Started <ChevronRight size={18} className="ml-1" />
         </Button>

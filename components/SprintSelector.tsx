@@ -51,8 +51,6 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
   const [isFormValid, setIsFormValid] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  console.log(projectId);
-
   useEffect(() => {
     const { name, startDate, endDate } = newSprint;
     const isValid = Boolean(

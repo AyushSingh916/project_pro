@@ -5,8 +5,6 @@ export async function POST(request: Request) {
   try {
     const { username, slug } = await request.json();
 
-    console.log(username, slug);
-
     if (!username || !slug) {
       return NextResponse.json({ error: "Username and slug are required" }, { status: 400 });
     }
@@ -16,8 +14,6 @@ export async function POST(request: Request) {
       where: { slug },
       include: { admin: true },
     });
-
-    console.log(organization);
 
     if (!organization) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });

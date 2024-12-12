@@ -36,7 +36,6 @@ function Header() {
         if (response.ok) {
           const data = await response.json();
           setJoinRequests(data.notifications);
-          console.log(data.notifications);
         } else {
           console.error("Failed to fetch join requests");
         }
