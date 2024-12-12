@@ -3,9 +3,11 @@ import { db } from "@/lib/prisma";
 
 export async function POST(request: Request) {
     try {
-      let { username, projectId } = await request.json();
+      const req = await request.json();
+
+      const username = req.username;
+      const projectId = parseInt(req.projectId);
   
-      // Fetch the user by username
       const user = await db.user.findUnique({
         where: { username },
       });
@@ -16,8 +18,7 @@ export async function POST(request: Request) {
           { status: 404 }
         );
       }
-      projectId = parseInt(projectId)
-      // Check if the project exists
+
       const project = await db.project.findUnique({
         where: { id: projectId },
       });
@@ -29,15 +30,11 @@ export async function POST(request: Request) {
         );
       }
   
-      // Debugging logs
-      console.log("Connecting user ID:", user.id, "to project ID:", projectId);
-  
-      // Add the user as a collaborator to the project
       await db.project.update({
         where: { id: projectId },
         data: {
           collaborators: {
-            connect: { id: user.id }, // Use `id` as per schema
+            connect: { id: user.id }, 
           },
         },
       });

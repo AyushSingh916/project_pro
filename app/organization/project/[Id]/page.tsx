@@ -2,64 +2,55 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, PlusCircle } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { ArrowLeft } from "lucide-react";
 import KanbanBoard from "@/components/KanbanBoard";
-import AddCollaboratorModal from "@/components/addcollabarators";
-import { Issue, Sprint, NewSprint, Collaborator } from "@/components/types";
+import AddCollaboratorModal from "@/components/Modals/addcollabarators";
+import { Issue, Sprint } from "@/components/types";
+import Collaborators from "@/components/collabarators";
+import SprintSelector from "@/components/SprintSelector";
+import CreateIssueDialog from "@/components/CreateIssueDialog";
 
-const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
+interface ProjectSprintPageProps {
+  params: Promise<{ Id: string }>;
+}
+
+type NewIssue = {
+  title: string;
+  description: string;
+  assignee: string;
+  priority: "low" | "medium" | "high";
+};
+
+const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [issueError, setIssueError] = useState<string | null>(null);
-  const [projectId, setId] = useState<string>();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [projectId, setProjectId] = useState<string | undefined>();
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
-  const [isCreateIssueDialogOpen, setIsCreateIssueDialogOpen] = useState(false);
+  const [isCreateIssueDialogOpen, setIsCreateIssueDialogOpen] =
+    useState<boolean>(false);
   const [isAddCollaboratorModalOpen, setIsAddCollaboratorModalOpen] =
-    useState(false);
-  const [newIssue, setNewIssue] = useState<Partial<Issue>>({
+    useState<boolean>(false);
+  const [newIssue, setNewIssue] = useState<NewIssue>({
     title: "",
     description: "",
     assignee: "",
     priority: "medium",
   });
-  const [newSprint, setNewSprint] = useState<NewSprint>({
-    name: "",
-    startDate: "",
-    endDate: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCreateSprintDialogOpen, setIsCreateSprintDialogOpen] =
-    useState(false);
-  const [collaborators, setcollaborators] = useState<Collaborator[]>([]);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
 
+  // Initialize projectId from params
   useEffect(() => {
     params.then((resolvedParams) => {
-      setId(resolvedParams.Id);
+      setProjectId(resolvedParams.Id);
     });
   }, [params]);
 
-  // Fetch all project data
+  // Fetch initial project data
   useEffect(() => {
     const fetchData = async () => {
       if (!projectId) return;
@@ -71,14 +62,19 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
           body: JSON.stringify({ projectId }),
         });
 
-        if (!res.ok) throw new Error("Failed to fetch data");
+        if (!res.ok) throw new Error("Failed to fetch project data");
 
         const data = await res.json();
         setSprints(data.sprints || []);
-        setcollaborators(data.collab || []);
+        setCollaborators(data.collab || []);
         setSelectedSprint(data.sprints?.[0] || null);
       } catch (error) {
         console.error("Error fetching project data:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch project data"
+        );
       } finally {
         setLoading(false);
       }
@@ -87,23 +83,24 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
     fetchData();
   }, [projectId]);
 
-  // Fetch issues for the selected sprint
+  // Fetch issues for selected sprint
   useEffect(() => {
     const fetchIssuesForSprint = async () => {
       if (!selectedSprint?.id) return;
 
-      setIssueError(null);
+      setIsLoading(true);
 
       try {
         const response = await fetch(
           `/api/projects/sprints/issues/find/?sprintId=${selectedSprint.id}`,
-          { method: "GET", headers: { "Content-Type": "application/json" } }
+          { method: "GET" }
         );
 
-        if (!response.ok) throw new Error(`Failed to fetch issues`);
+        if (!response.ok) throw new Error("Failed to fetch issues");
 
         const data = await response.json();
 
+        // Update both sprints and selectedSprint with the new issues
         setSprints((prevSprints) =>
           prevSprints.map((sprint) =>
             sprint.id === selectedSprint.id
@@ -111,48 +108,18 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
               : sprint
           )
         );
+        setSelectedSprint((prev) =>
+          prev ? { ...prev, issues: data.issues } : null
+        );
       } catch (error) {
         console.error("Error fetching issues:", error);
-        setIssueError(
-          error instanceof Error ? error.message : "Failed to fetch issues"
-        );
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchIssuesForSprint();
   }, [selectedSprint?.id]);
-
-  const createSprint = async () => {
-    if (
-      !projectId ||
-      !newSprint.name ||
-      !newSprint.startDate ||
-      !newSprint.endDate
-    )
-      return;
-
-    try {
-      const response = await fetch("/api/projects/sprints/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId, ...newSprint }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create sprint");
-
-      const createdSprint = await response.json();
-
-      setSprints((prevSprints) => [
-        ...prevSprints,
-        { ...createdSprint, issues: [] },
-      ]);
-
-      setNewSprint({ name: "", startDate: "", endDate: "" });
-      setIsCreateSprintDialogOpen(false);
-    } catch (error) {
-      console.error("Error creating sprint:", error);
-    }
-  };
 
   const createIssue = async () => {
     if (!selectedSprint || !newIssue.title || !newIssue.assignee) return;
@@ -171,24 +138,18 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
       if (!response.ok) throw new Error("Failed to create issue");
 
       const createdIssue = await response.json();
-
       const updatedIssues = [...(selectedSprint.issues || []), createdIssue];
 
-      // Replace selectedSprint with the updated array
-      const updatedSprint = {
-        ...selectedSprint,
-        issues: updatedIssues,
-      };
-
-      // Update both `selectedSprint` and `sprints`
+      // Update both sprints and selectedSprint
+      const updatedSprint = { ...selectedSprint, issues: updatedIssues };
       setSprints((prevSprints) =>
         prevSprints.map((sprint) =>
           sprint.id === selectedSprint.id ? updatedSprint : sprint
         )
       );
-
-      // Update `selectedSprint` to ensure it reflects the latest state
       setSelectedSprint(updatedSprint);
+
+      // Reset form
       setNewIssue({
         title: "",
         description: "",
@@ -198,6 +159,9 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
       setIsCreateIssueDialogOpen(false);
     } catch (error) {
       console.error("Error creating issue:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to create issue"
+      );
     }
   };
 
@@ -209,19 +173,18 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
     setError(null);
 
     try {
-      // Your API call to update issue status
       const response = await fetch("/api/projects/sprints/issues/update", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           issueId,
           status: newStatus.toUpperCase().replace("-", "_"),
         }),
       });
 
-      console.log(await response.json());
+      if (!response.ok) throw new Error("Failed to update issue status");
+
+      // const data = await response.json();
 
       if (!selectedSprint) return;
 
@@ -230,37 +193,62 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
           issue.id === issueId ? { ...issue, status: newStatus } : issue
         ) || [];
 
-      // Create a new `selectedSprint` object with the updated issues array
-      const updatedSprint = {
-        ...selectedSprint,
-        issues: updatedIssues,
-      };
-
+      // Update both sprints and selectedSprint
+      const updatedSprint = { ...selectedSprint, issues: updatedIssues };
+      setSprints((prevSprints) =>
+        prevSprints.map((sprint) =>
+          sprint.id === selectedSprint.id ? updatedSprint : sprint
+        )
+      );
       setSelectedSprint(updatedSprint);
-    } catch (err) {
+    } catch (error) {
+      console.error("Error updating issue status:", error);
       setError(
-        err instanceof Error ? err.message : "Failed to update issue status"
+        error instanceof Error ? error.message : "Failed to update issue status"
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  console.log(projectId)
+
   const handleAddCollaborator = async (memberId: string) => {
-    const response = await fetch("/api/projects/add_collab", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: memberId,
-        projectId: projectId,
-      }),
-    });
-    const id = parseInt(memberId);
-    const { username, email } = await response.json();
-    setcollaborators((prevCollaborators) => [
-      ...prevCollaborators,
-      { id, username, email },
-    ]);
+    try {
+      console.log(projectId, memberId)
+      const response = await fetch("/api/projects/add_collab", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: memberId,
+          projectId: projectId,
+        }),
+      });
+
+      console.log(projectId, memberId)
+
+      if (!response.ok) throw new Error("Failed to add collaborator");
+
+      const data = await response.json();
+      const id = parseInt(memberId);
+      const { username, email } = data;
+
+      setCollaborators((prev) => [...prev, { id, username, email }]);
+      setIsAddCollaboratorModalOpen(false);
+    } catch (error) {
+      console.error("Error adding collaborator:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to add collaborator"
+      );
+    }
+  };
+
+  const handleUpdateSprint = (updatedSprint: Sprint) => {
+    setSelectedSprint(updatedSprint);
+  };
+
+  const handleUpdateSprints = (updatedSprints: Sprint[]) => {
+    setSprints(updatedSprints);
   };
 
   if (loading) {
@@ -286,189 +274,30 @@ const ProjectSprintPage = ({ params }: { params: Promise<{ Id: string }> }) => {
 
       <Card>
         <div className="flex justify-between items-center p-4">
-          <div className="flex items-center space-x-4">
-            <Select
-              value={selectedSprint?.id.toString()}
-              onValueChange={(value) => {
-                const sprint = sprints.find((s) => s.id === parseInt(value));
-                setSelectedSprint(sprint || null);
-              }}
-            >
-              <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select Sprint" />
-              </SelectTrigger>
-              <SelectContent>
-                {sprints.map((sprint) => (
-                  <SelectItem key={sprint.id} value={sprint.id.toString()}>
-                    {sprint.name} ({sprint.startDate} - {sprint.endDate})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Dialog
-              open={isCreateSprintDialogOpen}
-              onOpenChange={setIsCreateSprintDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button variant="default">
-                  <PlusCircle className="w-4 h-4 mr-2" />
-                  Create Sprint
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Sprint</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Label>Sprint Name</Label>
-                  <Input
-                    value={newSprint.name}
-                    onChange={(e) =>
-                      setNewSprint({ ...newSprint, name: e.target.value })
-                    }
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Start Date</Label>
-                      <Input
-                        type="date"
-                        value={newSprint.startDate}
-                        onChange={(e) =>
-                          setNewSprint({
-                            ...newSprint,
-                            startDate: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>End Date</Label>
-                      <Input
-                        type="date"
-                        value={newSprint.endDate}
-                        onChange={(e) =>
-                          setNewSprint({
-                            ...newSprint,
-                            endDate: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <Button onClick={createSprint} className="w-full">
-                    Create Sprint
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          <Dialog
-            open={isCreateIssueDialogOpen}
-            onOpenChange={setIsCreateIssueDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">
-                <PlusCircle className="w-4 h-4 mr-2" />
-                Create Issue
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Issue</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={newIssue.title}
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, title: e.target.value })
-                  }
-                  placeholder="Enter issue title"
-                />
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={newIssue.description}
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, description: e.target.value })
-                  }
-                  placeholder="Enter issue description"
-                />
-                <Label htmlFor="assignee">Assignee</Label>
-                <select
-                  id="assignee"
-                  value={newIssue.assignee}
-                  onChange={(e) =>
-                    setNewIssue({ ...newIssue, assignee: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring"
-                >
-                  <option value="" disabled>
-                    Select a collaborator
-                  </option>
-                  {collaborators.map((collaborator) => (
-                    <option key={collaborator.id} value={collaborator.username}>
-                      {collaborator.username} ({collaborator.email})
-                    </option>
-                  ))}
-                </select>
-                <Label>Priority</Label>
-                <div className="flex space-x-2 mt-2">
-                  {["low", "medium", "high"].map((priority) => (
-                    <Button
-                      key={priority}
-                      variant={
-                        newIssue.priority === priority ? "default" : "outline"
-                      }
-                      onClick={() =>
-                        setNewIssue({
-                          ...newIssue,
-                          priority: priority as Issue["priority"],
-                        })
-                      }
-                    >
-                      {priority}
-                    </Button>
-                  ))}
-                </div>
-                <Button onClick={createIssue} className="w-full">
-                  Create Issue
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <SprintSelector
+            sprints={sprints}
+            selectedSprint={selectedSprint}
+            isLoading={isLoading}
+            projectId={projectId}
+            handleUpdateSprint={handleUpdateSprint}
+            handleUpdateSprints={handleUpdateSprints}
+          />
+          <CreateIssueDialog
+            isOpen={isCreateIssueDialogOpen}
+            setIsCreateIssueDialogOpen={setIsCreateIssueDialogOpen}
+            newIssue={newIssue}
+            setNewIssue={setNewIssue}
+            createIssue={createIssue}
+            collaborators={collaborators}
+          />
         </div>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Collaborators</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {collaborators.length > 0 ? (
-            <ul className="space-y-2">
-              {collaborators.map((collaborator) => (
-                <li
-                  key={collaborator.id}
-                  className="px-4 py-2 border rounded-md shadow-sm"
-                >
-                  <p className="font-semibold">{collaborator.username}</p>
-                  <p className="text-sm text-gray-500">{collaborator.email}</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-500">No collaborators found.</p>
-          )}
-        </CardContent>
-      </Card>
+      <Collaborators collabarators={collaborators} />
 
       {selectedSprint && (
         <KanbanBoard
-          issues={selectedSprint.issues}
+          issues={selectedSprint.issues || []}
           onStatusChange={handleStatusChange}
           isLoading={isLoading}
           error={error}

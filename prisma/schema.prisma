@@ -12,6 +12,7 @@ model User {
   username              String         @unique
   email                 String         @unique
   password              String
+  imageUrl              String?        @unique
   organizations         Organization[] @relation("UserOrganizations")
   projects              Project[]      @relation("ProjectCollaborators")
   issues                Issue[]
@@ -26,7 +27,7 @@ model Organization {
   id            Int            @id @default(autoincrement())
   name          String         @unique
   slug          String         @unique
-  adminUsername String
+  adminUsername String         @default("")
   admin         User           @relation(fields: [adminUsername], references: [username])
   description   String?
   users         User[]         @relation("UserOrganizations")

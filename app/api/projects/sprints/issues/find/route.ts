@@ -23,13 +23,6 @@ export async function GET(
       },
     });
 
-    if (issues.length === 0) {
-      return NextResponse.json(
-        { message: "No issues found for this sprint." },
-        { status: 404 }
-      );
-    }
-
     return NextResponse.json({ issues }, { status: 200 });
   } catch (error) {
     console.error("Error fetching issues:", error);

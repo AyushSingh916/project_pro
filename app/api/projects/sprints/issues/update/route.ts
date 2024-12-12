@@ -1,7 +1,7 @@
 // app/api/projects/sprints/issues/update/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
-import { Priority, Status } from "@prisma/client";
+import { Status } from "@prisma/client";
 
 export async function PUT(request: Request) {
   try {

@@ -2,9 +2,9 @@ export interface Issue {
   id: string;
   title: string;
   description: string;
-  assignee: string;
+  assigneeUsername: string;
   priority: "low" | "medium" | "high";
-  status: "todo" | "in-progress" | "review" | "done";
+  status: "todo" | "in_progress" | "review" | "done";
 }
 
 export interface NewSprint {
@@ -24,7 +24,7 @@ export interface Sprint {
 
 
 export type Collaborator = {
-  id: number;
+  id: string;
   username: string;
   email: string;
 };

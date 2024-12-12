@@ -51,7 +51,7 @@ const getPriorityColor = (priority: string) => {
 export default function AssignedTasksList() {
   const [issues, setIssues] = useState<Issue[]>([]);
 
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const username = session?.user?.username || "User";
 
   useEffect(() => {

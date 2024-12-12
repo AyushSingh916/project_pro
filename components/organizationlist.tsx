@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Building2, Users, Plus, Shield, Send, Trash2 } from "lucide-react";
+import { Building2, Plus, Shield, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +41,7 @@ interface Organization {
   description?: string;
   userRole: OrganizationRole;
   slug?: string;
-  adminUsername: string;
+  adminUsername?: string;
 }
 
 declare module "next-auth" {
@@ -70,9 +70,9 @@ export default function OrganizationList() {
   const [joinOrgSlug, setJoinOrgSlug] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const { data: session, status } = useSession();
-  if (!session) return;
-  const username = session.user.username || "User";
+  const { data: session } = useSession();
+
+  const username = session?.user?.username ?? "User";
 
   const { toast } = useToast();
 
@@ -140,9 +140,6 @@ export default function OrganizationList() {
         console.error("Error response from server:", errorData);
         return;
       }
-
-      // Parse and process the successful response
-      const newOrganization = await response.json();
 
       toast({
         title: "Organization Created",
@@ -232,7 +229,7 @@ export default function OrganizationList() {
     }
 
     try {
-      const response = await fetch("/api/organizations/join", {
+      await fetch("/api/organizations/join", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -301,7 +298,7 @@ export default function OrganizationList() {
     };
 
     fetchOrganizations();
-  }, [username]);
+  }, [username, toast]);
 
   
   if (loading) {

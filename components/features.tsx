@@ -1,10 +1,8 @@
 import { Card, CardContent } from "./ui/card";
 import {
-    ChevronRight,
     Layout,
     Calendar,
     BarChart,
-    ArrowRight,
   } from "lucide-react";
 
 const features = [

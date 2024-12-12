@@ -31,6 +31,7 @@ export default function SignInPage() {
         window.location.href = "/"; // Redirect to your desired page
       }
     } catch (err) {
+      console.error(err)
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

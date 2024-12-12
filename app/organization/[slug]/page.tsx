@@ -20,16 +20,9 @@ import {
   Mail,
   User,
 } from "lucide-react";
-import CreateProjectModal from "@/components/CreateProjectModal";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import AddMemberModal from "@/components/addmembermodal";
+import CreateProjectModal from "@/components/Modals/CreateProjectModal";
+
+import AddMemberModal from "@/components/Modals/addmembermodal";
 import Link from "next/link";
 
 interface User {

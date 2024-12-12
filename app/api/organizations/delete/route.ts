@@ -13,9 +13,12 @@ export async function DELETE(request: Request) {
     });
 
     // If the deletion is successful, return a success response
-    return NextResponse.json({ ok: true, message: "Organization deleted successfully" }, { status: 200 });
+    return NextResponse.json({ deletedOrg }, { status: 200 });
   } catch (error) {
     console.error("Error deleting organization:", error);
-    return NextResponse.json({ ok: false, message: "Error deleting organization" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, message: "Error deleting organization" },
+      { status: 500 }
+    );
   }
 }
