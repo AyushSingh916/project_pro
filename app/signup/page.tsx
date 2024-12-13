@@ -350,7 +350,7 @@ export default function SignUpPage() {
               onClick={handleDemoLogin}
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-gray-500/50"
             >
-              Sign in as Demo
+              Sign in for Demo
             </Button>
 
             <div className="text-center mt-4">
