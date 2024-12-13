@@ -5,7 +5,6 @@ import Link from "next/link";  // Import Link from next/link
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleIcon, GithubIcon } from "@/components/icons/CustomIcons";
 
@@ -13,7 +12,6 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -206,8 +204,6 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
-
     if (!isOtpSent) {
       await sendOtp();
     } else {
