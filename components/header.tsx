@@ -41,7 +41,7 @@ function Header() {
         }
       } catch (error) {
         console.error("Error fetching join requests:", error);
-      } 
+      }
     };
 
     if (username) {
@@ -52,7 +52,9 @@ function Header() {
   useEffect(() => {
     const fetchAvatar = async () => {
       try {
-        const response = await fetch(`/api/user/update/image/getUrl?username=${username}`);
+        const response = await fetch(
+          `/api/user/update/image/getUrl?username=${username}`
+        );
         if (response.ok) {
           const data = await response.json();
           setAvatarUrl(data.imageUrl || "/default-avatar.svg");
@@ -70,19 +72,20 @@ function Header() {
   }, [username]);
 
   return (
-    <header className="container mx-auto">
+    <header className="container mx-auto bg-black">
       <nav className="py-6 px-4 flex justify-between items-center text-white">
         <Link href="/">
           <h1 className="text-2xl font-bold">
             <Image
               src={"/logo.svg"}
-              alt="Zscrum Logo"
-              width={300}
-              height={84}
-              className="h-14 w-auto object-contain"
+              alt="ProjectPro Logo"
+              width={400} 
+              height={112} 
+              className="h-20 w-auto object-contain" 
             />
           </h1>
         </Link>
+
         <div className="flex items-center gap-4">
           {session && (
             <>

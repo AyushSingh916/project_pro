@@ -5,7 +5,7 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import Header from "@/components/header";
 import { AppProvider } from "./provider";
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,9 +26,18 @@ export default function RootLayout({
           <Header />
           <main className="min-h-screen">{children}</main>
           <Toaster />
-          <footer className="bg-gray-900 py-12 text">
-            <div className="container mx-auto text-center text-gray-200">
-              <p>Made with ❤️ by Ayush Singh</p>
+          <footer className="bg-black py-12 text-center">
+            <div className="container mx-auto text-gray-200">
+              <p className="text-lg mb-2">Made with ❤️ by Ayush Singh</p>
+              <p className="text-sm">
+                For inquiries, contact me at{" "}
+                <a
+                  href="mailto:ayushsingh916924@gmail.com"
+                  className="text-blue-400 hover:text-blue-500"
+                >
+                  ayushsingh916924@gmail.com
+                </a>
+              </p>
             </div>
           </footer>
         </AppProvider>
