@@ -1,5 +1,6 @@
 "use client";
 import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";  // Import Link from next/link
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ export default function SignUpPage() {
   const [otpError, setOtpError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
+
+  const router = useRouter();
 
   const { toast } = useToast();
 
@@ -202,6 +205,37 @@ export default function SignUpPage() {
     }
   };
 
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    try {
+      const demoCredentials = { email: "ayushsingh916924@gmail.com", password: "123456" };
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: demoCredentials.email,
+        password: demoCredentials.password,
+      });
+
+      if (result?.error) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "Failed to sign in as Demo account.",
+        });
+      } else {
+        router.push("/");
+      }
+    } catch (error) {
+      console.error("Error signing in as demo:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred during demo login.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isOtpSent) {
@@ -280,14 +314,14 @@ export default function SignUpPage() {
                     htmlFor="otp" 
                     className="block text-gray-300 mb-2 font-semibold text-sm tracking-tight"
                   >
-                    One-Time Password (OTP)
+                    OTP
                   </Label>
                   <Input
                     type="text"
                     id="otp"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter 6-digit code"
+                    placeholder="Enter the OTP sent to your email"
                     className="w-full border-gray-500 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 transition-all duration-300 rounded-lg"
                     disabled={isLoading}
                   />
@@ -299,55 +333,52 @@ export default function SignUpPage() {
                 </div>
               )}
 
-              <Button
+              <Button 
                 type="submit"
-                className="w-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-sky-300/50"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-gray-500/50"
                 disabled={isLoading}
               >
-                {isLoading
-                  ? isOtpSent
-                    ? "Verifying OTP..."
-                    : "Sending OTP..."
-                  : isOtpSent
-                  ? "Verify OTP"
-                  : "Send OTP"}
+                {isOtpSent ? "Verify OTP" : "Send OTP"}
               </Button>
             </form>
 
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-3 bg-gray-900 text-gray-500">
-                  Or continue with
-                </span>
-              </div>
+            <div className="relative flex justify-center text-xs text-gray-500">
+              <span className="bg-gray-900 px-2">OR</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <Button
+              onClick={handleDemoLogin}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-gray-500/50"
+            >
+              Sign in as Demo
+            </Button>
+
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-400">
+                Already have an account?{" "}
+                <Link href="/signin" className="text-sky-500 font-medium">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+            
+            <div className="mt-4 space-y-4">
               <Button
-                onClick={() => handleOAuthSignUp("google")}
-                className="w-full bg-gray-800 text-white hover:from-red-600 hover:to-red-800"
+                onClick={() => handleOAuthSignUp('google')}
+                className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-all duration-300 ease-in-out"
               >
                 <GoogleIcon />
-                Google
+                Sign in with Google
               </Button>
+
               <Button
-                onClick={() => handleOAuthSignUp("github")}
-                className="w-full bg-gray-800 text-white hover:bg-gray-700"
+                onClick={() => handleOAuthSignUp('github')}
+                className="w-full bg-gradient-to-r from-gray-600 to-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition-all duration-300 ease-in-out"
               >
-                <GithubIcon/>
-                GitHub
+                <GithubIcon />
+                Sign in with GitHub
               </Button>
             </div>
-
-            <p className="mt-4 text-center text-sm text-gray-500">
-              Already have an account?{" "}
-              <Link href="/signin" className="text-sky-500 hover:text-sky-600 font-semibold">
-                Sign In
-              </Link>
-            </p>
           </div>
         </div>
       </div>
