@@ -23,11 +23,11 @@ function Header() {
   const handleDemoSignIn = async () => {
     try {
       const result = await signIn("credentials", {
-        email: "ayushsingh916924@gmail.com",    
-        password: "123456",  
+        email: "ayushsingh916924@gmail.com",
+        password: "123456",
         redirect: false,
       });
-      
+
       if (result?.error) {
         console.error("Demo sign in failed:", result.error);
       }
@@ -165,12 +165,40 @@ function Header() {
                 className="h-12 w-auto object-contain"
               />
             </Link>
-            <button
-              onClick={toggleMobileMenu}
-              className="p-2 rounded-md hover:bg-gray-800"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+            {!session && (
+              <button
+                onClick={toggleMobileMenu}
+                className="p-2 rounded-md hover:bg-gray-800"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+            )}
+            {session?.user && (
+              <div className="flex items-center gap-4 justify-center">
+                <button
+                  className="w-10 h-10 rounded-full overflow-hidden border border-gray-300"
+                  onClick={handleUserModalToggle}
+                >
+                  <Image
+                    src={avatarUrl}
+                    alt="User Avatar"
+                    width={80}
+                    height={80}
+                    className="object-cover"
+                  />
+                </button>
+                <button
+                  className="w-10 h-10 rounded-full flex justify-center items-center bg-gray-800 hover:bg-gray-700"
+                  onClick={handleNotificationModalToggle}
+                >
+                  {joinRequests ? (
+                    <BellRing className="w-6 h-6 text-white" />
+                  ) : (
+                    <Bell className="w-6 h-6 text-white" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu */}
@@ -184,45 +212,19 @@ function Header() {
                   >
                     Sign In with Demo Account
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => router.push("/signin")}
                     className="w-full"
                   >
                     Sign In
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => router.push("/signup")}
                     className="w-full"
                   >
                     Sign Up
                   </Button>
                 </>
-              )}
-              {session?.user && (
-                <div className="flex items-center gap-4 justify-center">
-                  <button
-                    className="w-10 h-10 rounded-full overflow-hidden border border-gray-300"
-                    onClick={handleUserModalToggle}
-                  >
-                    <Image
-                      src={avatarUrl}
-                      alt="User Avatar"
-                      width={80}
-                      height={80}
-                      className="object-cover"
-                    />
-                  </button>
-                  <button
-                    className="w-10 h-10 rounded-full flex justify-center items-center bg-gray-800 hover:bg-gray-700"
-                    onClick={handleNotificationModalToggle}
-                  >
-                    {joinRequests ? (
-                      <BellRing className="w-6 h-6 text-white" />
-                    ) : (
-                      <Bell className="w-6 h-6 text-white" />
-                    )}
-                  </button>
-                </div>
               )}
             </div>
           )}
