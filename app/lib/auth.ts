@@ -1,4 +1,6 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GitHubProvider from 'next-auth/providers/github';
+import GoogleProvider from 'next-auth/providers/google';
 import { db } from "@/lib/prisma";
 
 export const NEXT_AUTH = {
@@ -40,7 +42,61 @@ export const NEXT_AUTH = {
           return null; // Return null in case of an error
         }
       }
-    })
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID || "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      async profile(profile) {
+        const email = profile.email || "";
+        const username = profile.login;
+        const imageUrl = profile.avatar_url;
+
+        let user = await db.user.findUnique({
+          where: { email },
+        });
+
+        if (!user) {
+          user = await db.user.create({
+            data: {
+              email,
+              username,
+              password: "", 
+              imageUrl,
+            },
+          });
+        }
+
+        return { id: String(user.id), username: user.username, email: user.email };
+      }
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      async profile(profile) {
+        const email = profile.email || "";
+        const username = profile.name.replace(/\s+/g, '').toLowerCase();
+        const imageUrl = profile.picture;
+
+        // Check if the user already exists
+        let user = await db.user.findUnique({
+          where: { email },
+        });
+
+        if (!user) {
+          // Create a new user in the database
+          user = await db.user.create({
+            data: {
+              email,
+              username,
+              password: "", // No password for OAuth users
+              imageUrl,
+            },
+          });
+        }
+
+        return { id: String(user.id), username: user.username, email: user.email };
+      }
+    }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   pages: {

@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { GoogleIcon, GithubIcon } from "@/components/icons/CustomIcons";
 import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -17,30 +19,42 @@ export default function SignInPage() {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-
     try {
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-
       if (result?.error) {
         setError("Invalid email or password");
       } else {
         window.location.href = "/"; // Redirect to your desired page
       }
     } catch (err) {
-      console.error(err)
+      console.error(err);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleOAuthSignIn = async (provider: "github" | "google") => {
+    setIsLoading(true);
+    try {
+      await signIn(provider, {
+        callbackUrl: "/",
+        redirect: true,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(`An error occurred while signing in with ${provider}`);
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black p-4">
+      <Card className="w-full max-w-md bg-gray-900 border-gray-700">
         <CardHeader>
           <h1 className="text-2xl font-bold text-center text-white">Sign In</h1>
         </CardHeader>
@@ -90,14 +104,45 @@ export default function SignInPage() {
               </Button>
             </form>
 
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-gray-800 px-2 text-gray-400">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+                onClick={() => handleOAuthSignIn("github")}
+                disabled={isLoading}
+              >
+                <GithubIcon />
+                GitHub
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-gray-700 hover:bg-gray-600 text-white border-gray-600"
+                onClick={() => handleOAuthSignIn("google")}
+                disabled={isLoading}
+              >
+                <GoogleIcon />
+                Google
+              </Button>
+            </div>
+
             <p className="text-center text-sm text-gray-400">
               Don&apos;t have an account?{" "}
-              <a 
-                href="/signup" 
-                className="text-blue-400 hover:text-blue-300"
-              >
+              <Link href="/signup" className="text-blue-400 hover:text-blue-300">
                 Sign up
-              </a>
+              </Link>
             </p>
           </div>
         </CardContent>
