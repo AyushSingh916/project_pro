@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ export default function UserModal({ user, isOpen, onClose, onSignOut }: any) {
   const { toast } = useToast();
   const [newEmail, setNewEmail] = useState(user?.email || "");
   const [newPassword, setNewPassword] = useState(user.password || "");
+  const router = useRouter(); 
 
   const handleEmailChange = async () => {
     try {
@@ -76,6 +78,15 @@ export default function UserModal({ user, isOpen, onClose, onSignOut }: any) {
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await onSignOut();
+      router.push("/"); // Redirect to homepage after sign out
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
@@ -84,7 +95,6 @@ export default function UserModal({ user, isOpen, onClose, onSignOut }: any) {
         </DialogHeader>
         <div className="space-y-6">
           <div className="flex flex-col items-center space-y-4">
-            {/* UploadAvatar component */}
             {user.username && <UploadAvatar username={user.username}/>}
           </div>
 
@@ -118,10 +128,10 @@ export default function UserModal({ user, isOpen, onClose, onSignOut }: any) {
         </div>
 
         <DialogFooter className="mt-6">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} className="mt-1">
             Close
           </Button>
-          <Button variant="destructive" onClick={onSignOut}>
+          <Button variant="destructive" onClick={handleSignOut}>
             Sign Out
           </Button>
         </DialogFooter>
