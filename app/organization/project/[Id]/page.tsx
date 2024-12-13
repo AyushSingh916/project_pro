@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -42,6 +43,8 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<any[]>([]);
+
+  const { toast } = useToast();
 
   // Initialize projectId from params
   useEffect(() => {
@@ -122,7 +125,55 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
   }, [selectedSprint?.id]);
 
   const createIssue = async () => {
-    if (!selectedSprint || !newIssue.title || !newIssue.assignee) return;
+    if (!selectedSprint || !newIssue.title || !newIssue.assignee) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedSprint.startDate || !selectedSprint.endDate) {
+      toast({
+        title: "Sprint Error",
+        description: "Sprint dates are not properly configured",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const currentDate = new Date();
+    const sprintStartDate = new Date(selectedSprint.startDate);
+    const sprintEndDate = new Date(selectedSprint.endDate);
+
+    if (isNaN(sprintStartDate.getTime()) || isNaN(sprintEndDate.getTime())) {
+      toast({
+        title: "Invalid Date",
+        description: "Sprint dates are invalid",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (currentDate < sprintStartDate) {
+      toast({
+        title: "Sprint Not Started",
+        description:
+          "Cannot create issues for sprints that haven't started yet",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (currentDate > sprintEndDate) {
+      toast({
+        title: "Sprint Ended",
+        description: "Cannot create issues for completed sprints",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const response = await fetch("/api/projects/sprints/issues/create", {
@@ -135,7 +186,10 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to create issue");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to create issue");
+      }
 
       const createdIssue = await response.json();
       const updatedIssues = [...(selectedSprint.issues || []), createdIssue];
@@ -157,11 +211,21 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
         priority: "medium",
       });
       setIsCreateIssueDialogOpen(false);
+
+      // Success toast
+      toast({
+        title: "Success",
+        description: "Issue created successfully",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error creating issue:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to create issue"
-      );
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to create issue",
+        variant: "destructive",
+      });
     }
   };
 
@@ -211,11 +275,9 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
     }
   };
 
-  console.log(projectId)
-
   const handleAddCollaborator = async (memberId: string) => {
     try {
-      console.log(projectId, memberId)
+      console.log(projectId, memberId);
       const response = await fetch("/api/projects/add_collab", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -225,7 +287,7 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
         }),
       });
 
-      console.log(projectId, memberId)
+      console.log(projectId, memberId);
 
       if (!response.ok) throw new Error("Failed to add collaborator");
 
@@ -273,29 +335,29 @@ const ProjectSprintPage: React.FC<ProjectSprintPageProps> = ({ params }) => {
       </div>
 
       <Card className="w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-center p-4 space-y-2 sm:space-y-0 sm:space-x-4">
-        <div className="w-full sm:w-auto">
-          <SprintSelector
-            sprints={sprints}
-            selectedSprint={selectedSprint}
-            isLoading={isLoading}
-            projectId={projectId}
-            handleUpdateSprint={handleUpdateSprint}
-            handleUpdateSprints={handleUpdateSprints}
-          />
+        <div className="flex flex-col sm:flex-row justify-between items-center p-4 space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="w-full sm:w-auto">
+            <SprintSelector
+              sprints={sprints}
+              selectedSprint={selectedSprint}
+              isLoading={isLoading}
+              projectId={projectId}
+              handleUpdateSprint={handleUpdateSprint}
+              handleUpdateSprints={handleUpdateSprints}
+            />
+          </div>
+          <div className="w-full sm:w-auto">
+            <CreateIssueDialog
+              isOpen={isCreateIssueDialogOpen}
+              setIsCreateIssueDialogOpen={setIsCreateIssueDialogOpen}
+              newIssue={newIssue}
+              setNewIssue={setNewIssue}
+              createIssue={createIssue}
+              collaborators={collaborators}
+            />
+          </div>
         </div>
-        <div className="w-full sm:w-auto">
-          <CreateIssueDialog
-            isOpen={isCreateIssueDialogOpen}
-            setIsCreateIssueDialogOpen={setIsCreateIssueDialogOpen}
-            newIssue={newIssue}
-            setNewIssue={setNewIssue}
-            createIssue={createIssue}
-            collaborators={collaborators}
-          />
-        </div>
-      </div>
-    </Card>
+      </Card>
 
       <Collaborators collabarators={collaborators} />
 
