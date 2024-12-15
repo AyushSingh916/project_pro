@@ -6,6 +6,7 @@ import { Inter } from "next/font/google";
 import Header from "@/components/header";
 import { AppProvider } from "./provider";
 import { Toaster } from "@/components/ui/toaster";
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +25,10 @@ export default function RootLayout({
       <body className={`${inter.className}`}>
         <AppProvider>
           <Header />
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen">
+            {children}
+            <Analytics />
+          </main>
           <Toaster />
           <footer className="bg-black py-12 text-center">
             <div className="container mx-auto text-gray-200">
